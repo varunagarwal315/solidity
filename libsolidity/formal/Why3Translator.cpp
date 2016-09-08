@@ -289,7 +289,7 @@ bool Why3Translator::visit(FunctionDefinition const& _function)
 		error(_function, "Only functions inside contracts allowed.");
 	addSourceFromDocStrings(m_currentContract.contract->annotation());
 
-	if (_function.isDeclaredConst())
+	if (_function.isPure() || _function.isView())
 		addLine("ensures { (old this) = this }");
 	else
 		addLine("writes { this }");

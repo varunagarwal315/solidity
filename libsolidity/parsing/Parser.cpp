@@ -304,16 +304,23 @@ ASTPointer<FunctionDefinition> Parser::parseFunctionDefinition(ASTString const* 
 	VarDeclParserOptions options;
 	options.allowLocationSpecifier = true;
 	ASTPointer<ParameterList> parameters(parseParameterList(options));
-	bool isDeclaredConst = false;
+	bool isView = false;
+	bool isPure = false;
 	bool isPayable = false;
 	Declaration::Visibility visibility(Declaration::Visibility::Default);
 	vector<ASTPointer<ModifierInvocation>> modifiers;
 	while (true)
 	{
 		Token::Value token = m_scanner->currentToken();
-		if (token == Token::Const)
+		// FIXME: constant should be removed at the next breaking release
+		if (token == Token::View || token == Token::Const)
 		{
-			isDeclaredConst = true;
+			isView = true;
+			m_scanner->next();
+		}
+		else if (token == Token::Pure)
+		{
+			isPure = true;
 			m_scanner->next();
 		}
 		else if (m_scanner->currentToken() == Token::Payable)
@@ -357,9 +364,10 @@ ASTPointer<FunctionDefinition> Parser::parseFunctionDefinition(ASTString const* 
 		c_isConstructor,
 		docstring,
 		parameters,
-		isDeclaredConst,
 		modifiers,
 		returnParameters,
+		isView,
+		isPure,
 		isPayable,
 		block
 	);
