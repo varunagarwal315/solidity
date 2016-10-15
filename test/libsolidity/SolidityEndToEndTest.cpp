@@ -7623,11 +7623,11 @@ BOOST_AUTO_TEST_CASE(array_of_functions)
 			mapping (address => function () internal returns()) stages;
 
 			function stage0() internal {
-					stages[msg.caller] = stage1;
+					stages[msg.sender] = stage1;
 			}
 
 			function stage1() internal {
-					stages[msg.caller] = stage2;
+					stages[msg.sender] = stage2;
 			}
 
 			function stage2() internal {
@@ -7635,9 +7635,9 @@ BOOST_AUTO_TEST_CASE(array_of_functions)
 			}
 
 			function f () {
-				if (0 == steps[msg.caller])
-					stages[msg.caller] = stage0;
-				stages[msg.caller]();
+				if (0 == steps[msg.sender])
+					stages[msg.sender] = stage0;
+				stages[msg.sender]();
 			}
 		}
 	)";
