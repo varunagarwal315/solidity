@@ -5,6 +5,7 @@ Features:
  * Inline assembly: support both `sucide` and `selfdestruct` opcodes
    (note: `suicide` is deprecated)
  * Include `keccak256()` as an alias to `sha3()`
+ * Allow multiple events of the same name (but with different arities or argument types)
 
 Bugfixes:
  * Disallow unknown options in `solc`
