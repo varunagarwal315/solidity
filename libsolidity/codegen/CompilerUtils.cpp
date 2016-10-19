@@ -351,7 +351,6 @@ void CompilerUtils::convertType(Type const& _typeOnStack, Type const& _targetTyp
 		solAssert(targetTypeCategory == Type::Category::Integer || targetTypeCategory == Type::Category::Enum, "");
 		break;
 	case Type::Category::FixedPoint:
-		solAssert(false, "Not yet implemented - FixedPointType.");
 	case Type::Category::Integer:
 	case Type::Category::Contract:
 	case Type::Category::RationalNumber:
@@ -372,18 +371,42 @@ void CompilerUtils::convertType(Type const& _typeOnStack, Type const& _targetTyp
 			convertType(_typeOnStack, *_typeOnStack.mobileType(), true);
 		else if (targetTypeCategory == Type::Category::FixedPoint)
 		{
-			solAssert(
+			/*solAssert(
 				stackTypeCategory == Type::Category::Integer || 
 				stackTypeCategory == Type::Category::RationalNumber ||
 				stackTypeCategory == Type::Category::FixedPoint,
 				"Invalid conversion to FixedMxNType requested."
-			);
+			);*/
 			//shift all integer bits onto the left side of the fixed type
 			FixedPointType const& targetFixedPointType = dynamic_cast<FixedPointType const&>(_targetType);
-			if (auto typeOnStack = dynamic_cast<IntegerType const*>(&_typeOnStack))
-				if (targetFixedPointType.integerBits() > typeOnStack->numBits())
-					cleanHigherOrderBits(*typeOnStack);
-			solAssert(false, "Not yet implemented - FixedPointType.");
+			if (auto intType = dynamic_cast<IntegerType const*>(&_typeOnStack))
+ 			{
+				if (targetFixedPointType.integerBits() > intType->numBits())
+					cleanHigherOrderBits(_targetType/**intType*/);
+				u256 shiftFactor = u256(1) << (targetFixedPointType.fractionalBits());
+				m_context << shiftFactor << Instruction::MUL;
+			}
+			else if (auto rationalType = dynamic_cast<RationalNumberType const*>(&_typeOnStack))
+			{
+				bool isValidType = (
+					targetFixedPointType.integerBits() > rationalType->fixedPointType()->integerBits() || 
+					targetFixedPointType.fractionalBits() > rationalType->fixedPointType()->fractionalBits()
+				);
+				if (isValidType && _cleanupNeeded)
+					cleanHigherOrderBits(targetFixedPointType);
+				shiftFixedPointNumber(*rationalType->fixedPointType(), targetFixedPointType);
+			}
+			else 
+			{
+				FixedPointType const& stackFixedType = dynamic_cast<FixedPointType const&>(_typeOnStack);
+				if (
+					targetFixedPointType.integerBits() > stackFixedType.integerBits() || 
+					targetFixedPointType.fractionalBits() > stackFixedType.fractionalBits()
+				)
+					cleanHigherOrderBits(stackFixedType);
+				shiftFixedPointNumber(stackFixedType, targetFixedPointType);
+			}
+			//solAssert(false, "Not yet implemented - FixedPointType.");
 		}
 		else
 		{
@@ -396,7 +419,7 @@ void CompilerUtils::convertType(Type const& _typeOnStack, Type const& _targetTyp
 				RationalNumberType const& constType = dynamic_cast<RationalNumberType const&>(_typeOnStack);
 				// We know that the stack is clean, we only have to clean for a narrowing conversion
 				// where cleanup is forced.
-				solAssert(!constType.isFractional(), "Not yet implemented - FixedPointType.");
+				solAssert(!constType.isFractional(), "Invalid Rational in Integer Conversion");
 				if (targetType.numBits() < constType.integerType()->numBits() && _cleanupNeeded)
 					cleanHigherOrderBits(targetType);
 			}
@@ -821,14 +844,43 @@ unsigned CompilerUtils::loadFromMemoryHelper(Type const& _type, bool _fromCallda
 	return numBytes;
 }
 
-void CompilerUtils::cleanHigherOrderBits(IntegerType const& _typeOnStack)
+void CompilerUtils::cleanHigherOrderBits(Type const& _typeOnStack)
 {
-	if (_typeOnStack.numBits() == 256)
-		return;
-	else if (_typeOnStack.isSigned())
-		m_context << u256(_typeOnStack.numBits() / 8 - 1) << Instruction::SIGNEXTEND;
+	auto cleanBits = [this](int const numBits, bool const isSigned) {
+		if (numBits == 256)
+			return;
+		else if (isSigned)
+			m_context << u256(numBits / 8 - 1) << Instruction::SIGNEXTEND;
+		else
+			m_context << ((u256(1) << numBits) - 1) << Instruction::AND;
+	};
+
+	if (auto intType = dynamic_cast<IntegerType const*>(&_typeOnStack)) 
+		cleanBits(intType->numBits(), intType->isSigned());
+	else if (auto fixedType = dynamic_cast<FixedPointType const*>(&_typeOnStack)) 
+		cleanBits(fixedType->numBits(), fixedType->isSigned());
 	else
-		m_context << ((u256(1) << _typeOnStack.numBits()) - 1) << Instruction::AND;
+		BOOST_THROW_EXCEPTION(
+			CompilerError() << errinfo_comment("Invalid type passed in too have higher bits cleaned.")
+		);
+}
+
+void CompilerUtils::shiftFixedPointNumber(FixedPointType const& _stackType, FixedPointType const& _targetType)
+{
+	u256 shiftFactor;
+	int targetFractionalBits = _targetType.fractionalBits();
+	int stackFractionalBits = _stackType.fractionalBits();
+
+	if (stackFractionalBits > targetFractionalBits)
+	{
+		shiftFactor = (u256(1) << (stackFractionalBits - targetFractionalBits));
+		m_context << shiftFactor << Instruction::SWAP1 << Instruction::DIV;
+	}
+	else if (stackFractionalBits < targetFractionalBits)
+	{
+		shiftFactor = (u256(1) << (targetFractionalBits - stackFractionalBits));
+		m_context << shiftFactor << Instruction::MUL;
+	}
 }
 
 unsigned CompilerUtils::prepareMemoryStore(Type const& _type, bool _padToWordBoundaries) const

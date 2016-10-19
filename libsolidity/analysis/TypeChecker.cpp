@@ -1042,6 +1042,7 @@ bool TypeChecker::visit(UnaryOperation const& _operation)
 
 void TypeChecker::endVisit(BinaryOperation const& _operation)
 {
+	cout << "hit typechecker first" << endl;
 	TypePointer const& leftType = type(_operation.leftExpression());
 	TypePointer const& rightType = type(_operation.rightExpression());
 	TypePointer commonType = leftType->binaryOperatorResult(_operation.getOperator(), rightType);

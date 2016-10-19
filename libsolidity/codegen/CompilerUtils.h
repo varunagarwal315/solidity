@@ -169,8 +169,11 @@ private:
 	/// Stack post:
 	void storeStringData(bytesConstRef _data);
 
-	/// Appends code that cleans higher-order bits for integer types.
-	void cleanHigherOrderBits(IntegerType const& _typeOnStack);
+	/// Helper function for handling fixed point shifting
+	void shiftFixedPointNumber(FixedPointType const& _stackType, FixedPointType const& _targetType);
+
+	/// Appends code that cleans higher-order bits for integer and fixed point types.
+	void cleanHigherOrderBits(Type const& _typeOnStack);
 
 	/// Prepares the given type for storing in memory by shifting it if necessary.
 	unsigned prepareMemoryStore(Type const& _type, bool _padToWordBoundaries) const;
