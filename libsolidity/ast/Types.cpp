@@ -2072,12 +2072,10 @@ TypePointer FunctionType::encodingType() const
 
 TypePointer FunctionType::interfaceType(bool /*_inLibrary*/) const
 {
-	if (m_location != Location::External && m_location != Location::Internal)
-		return TypePointer();
-	if (m_location != Location::External)
-		return TypePointer();
-	else
+	if (m_location == Location::External)
 		return make_shared<IntegerType>(8 * storageBytes());
+	else
+		return TypePointer();
 }
 
 bool FunctionType::canTakeArguments(TypePointers const& _argumentTypes, TypePointer const& _selfType) const

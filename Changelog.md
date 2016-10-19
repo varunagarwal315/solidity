@@ -1,6 +1,7 @@
 ### 0.4.4 (unreleased)
 
 Features:
+ * Function types
 
 Bugfixes:
  * Type checker: forbid signed exponential that led to an incorrect use of EXP opcode.
