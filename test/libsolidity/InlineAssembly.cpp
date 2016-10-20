@@ -169,6 +169,11 @@ BOOST_AUTO_TEST_CASE(magic_variables)
 	BOOST_CHECK(successAssemble("{ let ecrecover := 1 ecrecover }"));
 }
 
+BOOST_AUTO_TEST_CASE(error_tag)
+{
+	BOOST_CHECK(successAssemble("{ ErrorTag }"));
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
 }

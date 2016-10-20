@@ -7419,6 +7419,21 @@ BOOST_AUTO_TEST_CASE(inline_assembly_in_modifiers)
 	BOOST_CHECK(callContractFunction("f()") == encodeArgs(true));
 }
 
+BOOST_AUTO_TEST_CASE(inline_assembly_errortag)
+{
+	char const* sourceCode = R"(
+		contract A {
+			function f() {
+				assembly {
+					jump(ErrorTag)
+				}
+			}
+		}
+	)";
+	compileAndRun(sourceCode, 0, "C");
+	BOOST_CHECK(callContractFunction("f()") == encodeArgs());
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
 }
