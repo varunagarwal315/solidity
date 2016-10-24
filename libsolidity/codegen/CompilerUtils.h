@@ -169,7 +169,8 @@ private:
 	/// Stack post:
 	void storeStringData(bytesConstRef _data);
 
-	/// Helper function for handling fixed point shifting
+	/// Helper function for shifting values of fixed points to correct value while changing types eg fixed56x56 -> fixed128x128
+	/// essentially just moving an imaginary decimal point.
 	void shiftFixedPointNumber(FixedPointType const& _stackType, FixedPointType const& _targetType);
 
 	/// Appends code that cleans higher-order bits for integer and fixed point types.

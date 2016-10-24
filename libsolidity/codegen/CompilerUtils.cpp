@@ -371,18 +371,18 @@ void CompilerUtils::convertType(Type const& _typeOnStack, Type const& _targetTyp
 			convertType(_typeOnStack, *_typeOnStack.mobileType(), true);
 		else if (targetTypeCategory == Type::Category::FixedPoint)
 		{
-			/*solAssert(
+			solAssert(
 				stackTypeCategory == Type::Category::Integer || 
 				stackTypeCategory == Type::Category::RationalNumber ||
 				stackTypeCategory == Type::Category::FixedPoint,
 				"Invalid conversion to FixedMxNType requested."
-			);*/
+			);
 			//shift all integer bits onto the left side of the fixed type
 			FixedPointType const& targetFixedPointType = dynamic_cast<FixedPointType const&>(_targetType);
 			if (auto intType = dynamic_cast<IntegerType const*>(&_typeOnStack))
  			{
 				if (targetFixedPointType.integerBits() > intType->numBits())
-					cleanHigherOrderBits(_targetType/**intType*/);
+					cleanHigherOrderBits(_intType);
 				u256 shiftFactor = u256(1) << (targetFixedPointType.fractionalBits());
 				m_context << shiftFactor << Instruction::MUL;
 			}
@@ -406,7 +406,6 @@ void CompilerUtils::convertType(Type const& _typeOnStack, Type const& _targetTyp
 					cleanHigherOrderBits(stackFixedType);
 				shiftFixedPointNumber(stackFixedType, targetFixedPointType);
 			}
-			//solAssert(false, "Not yet implemented - FixedPointType.");
 		}
 		else
 		{
@@ -860,25 +859,22 @@ void CompilerUtils::cleanHigherOrderBits(Type const& _typeOnStack)
 	else if (auto fixedType = dynamic_cast<FixedPointType const*>(&_typeOnStack)) 
 		cleanBits(fixedType->numBits(), fixedType->isSigned());
 	else
-		BOOST_THROW_EXCEPTION(
-			CompilerError() << errinfo_comment("Invalid type passed in too have higher bits cleaned.")
-		);
+		solAssert("", "Invalid type passed in too have higher bits cleaned.");
 }
 
 void CompilerUtils::shiftFixedPointNumber(FixedPointType const& _stackType, FixedPointType const& _targetType)
 {
 	u256 shiftFactor;
-	int targetFractionalBits = _targetType.fractionalBits();
-	int stackFractionalBits = _stackType.fractionalBits();
+	int difference = _targetType.fractionalBits() - _stackType.fractionalBits();
 
-	if (stackFractionalBits > targetFractionalBits)
+	if (difference > 0)
 	{
-		shiftFactor = (u256(1) << (stackFractionalBits - targetFractionalBits));
+		shiftFactor = (u256(1) << (_stackType.fractionalBits() - _targetType.fractionalBits()));
 		m_context << shiftFactor << Instruction::SWAP1 << Instruction::DIV;
 	}
-	else if (stackFractionalBits < targetFractionalBits)
+	else if (difference < 0)
 	{
-		shiftFactor = (u256(1) << (targetFractionalBits - stackFractionalBits));
+		shiftFactor = (u256(1) << (difference));
 		m_context << shiftFactor << Instruction::MUL;
 	}
 }

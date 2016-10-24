@@ -355,7 +355,6 @@ bool ExpressionCompiler::visit(UnaryOperation const& _unaryOperation)
 
 bool ExpressionCompiler::visit(BinaryOperation const& _binaryOperation)
 {
-	cout << "hit expression compiler first" << endl;
 	CompilerContext::LocationSetter locationSetter(m_context, _binaryOperation);
 	Expression const& leftExpression = _binaryOperation.leftExpression();
 	Expression const& rightExpression = _binaryOperation.rightExpression();
