@@ -4518,6 +4518,167 @@ BOOST_AUTO_TEST_CASE(overwriting_inheritance)
 	BOOST_CHECK(callContractFunction("checkOk()") == encodeArgs(6));
 }
 
+BOOST_AUTO_TEST_CASE(override_by_is_base_ordering)
+{
+	char const* text = R"(
+		contract A {
+			function dup() returns (uint) {
+				return 1;
+			}
+		}
+		contract B {
+			function dup() returns (uint) {
+				return 2;
+			}
+		}
+		contract C is A, B {
+			function f() returns (uint) {
+				return dup();
+			}
+		}
+	)";
+	compileAndRun(text, 0, "C");
+	BOOST_CHECK(callContractFunction("f()") == encodeArgs(2));
+}
+
+BOOST_AUTO_TEST_CASE(inherited_function_clash_with_this)
+{
+	char const* sourceCode = R"(
+		contract A {
+			function dup() returns (uint) {
+				return 1;
+			}
+		}
+		contract B is A {
+			function dup() returns (uint) {
+				return 2;
+			}
+			function f() returns (uint) {
+				return this.dup();
+			}
+		}
+	)";
+	compileAndRun(sourceCode, 0, "B");
+	BOOST_CHECK(callContractFunction("f()") == encodeArgs(2));
+}
+
+BOOST_AUTO_TEST_CASE(inherited_function_clash_with_derived_name)
+{
+	char const* sourceCode = R"(
+		contract A {
+			function dup() returns (uint) {
+				return 1;
+			}
+		}
+		contract B is A {
+			function dup() returns (uint) {
+				return 2;
+			}
+			function f() returns (uint) {
+				return dup();
+			}
+		}
+	)";
+	compileAndRun(sourceCode, 0, "B");
+	BOOST_CHECK(callContractFunction("f()") == encodeArgs(2));
+}
+
+BOOST_AUTO_TEST_CASE(event_function_specified_early_function)
+{
+	char const* text = R"(
+		contract A {
+			function dup() returns (uint) {
+				return 1;
+			}
+		}
+		contract B {
+			event dup();
+		}
+		contract C is A, B {
+			function f() returns (uint) {
+				A.dup();
+				return 1;
+			}
+		}
+	)";
+	compileAndRun(text, 0, "C");
+	BOOST_CHECK(callContractFunction("f()") == encodeArgs(1));
+	BOOST_CHECK_EQUAL(m_logs.size(), 0);
+}
+
+BOOST_AUTO_TEST_CASE(event_function_specified_late_function)
+{
+	char const* text = R"(
+		contract B {
+			event dup();
+		}
+		contract A {
+			function dup() returns (uint) {
+				return 1;
+			}
+		}
+		contract C is B, A {
+			function f() returns (uint) {
+				A.dup();
+				return 1;
+			}
+		}
+	)";
+	compileAndRun(text, 0, "C");
+	BOOST_CHECK(callContractFunction("f()") == encodeArgs(1));
+	BOOST_CHECK_EQUAL(m_logs.size(), 0);
+}
+
+BOOST_AUTO_TEST_CASE(event_function_specified_early_event)
+{
+	char const* text = R"(
+		contract B {
+			event dup();
+		}
+		contract A {
+			function dup() returns (uint) {
+				return 1;
+			}
+		}
+		contract C is B, A {
+			function f() returns (uint) {
+				B.dup();
+				return 1;
+			}
+		}
+	)";
+	compileAndRun(text, 0, "C");
+	BOOST_CHECK(callContractFunction("f()") == encodeArgs(1));
+	BOOST_CHECK_EQUAL(m_logs.size(), 1);
+	BOOST_CHECK_EQUAL(m_logs[0].address, m_contractAddress);
+}
+
+BOOST_AUTO_TEST_CASE(event_function_specified_late_event)
+{
+	char const* text = R"(
+		contract A {
+			function dup() returns (uint) {
+				return 1;
+			}
+		}
+		contract B {
+			event dup();
+		}
+		contract C is A, B {
+			function f() returns (uint) {
+				B.dup();
+				return 1;
+			}
+		}
+	)";
+	compileAndRun(text, 0, "C");
+	BOOST_CHECK(callContractFunction("f()") == encodeArgs(1));
+	BOOST_CHECK_EQUAL(m_logs.size(), 1);
+	BOOST_CHECK_EQUAL(m_logs[0].address, m_contractAddress);
+}
+
+
+
 BOOST_AUTO_TEST_CASE(struct_assign_reference_to_struct)
 {
 	char const* sourceCode = R"(
