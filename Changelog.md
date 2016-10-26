@@ -6,6 +6,8 @@ Bugfixes:
  * Type checker: forbid signed exponential that led to an incorrect use of EXP opcode.
  * Code generator: properly clean higher order bytes before storing in storage.
 
+ * Type checker, code generator: enable access to events of base contracts' names
+
 ### 0.4.3 (2016-10-25)
 
 Features:
