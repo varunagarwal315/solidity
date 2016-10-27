@@ -896,7 +896,7 @@ public:
 	virtual bool canBeStored() const override { return m_location == Location::Internal || m_location == Location::External; }
 	virtual u256 storageSize() const override;
 	virtual unsigned storageBytes() const override;
-	virtual bool isValueType() const { return true; }
+	virtual bool isValueType() const override { return true; }
 	virtual bool canLiveOutsideStorage() const override { return m_location == Location::Internal || m_location == Location::External; }
 	virtual unsigned sizeOnStack() const override;
 	virtual MemberList::MemberMap nativeMembers(ContractDefinition const* _currentScope) const override;
