@@ -7685,7 +7685,43 @@ BOOST_AUTO_TEST_CASE(mapping_of_functions)
 	BOOST_CHECK(callContractFunction("f()") == encodeArgs());
 	BOOST_CHECK(callContractFunction("checkSuccess()") == encodeArgs(true));
 }
-// TODO: check packed encoding of functions in storage, check `new function(uint) internal returns (uint)[](20)`
+
+BOOST_AUTO_TEST_CASE(packed_functions)
+{
+	char const* sourceCode = R"(
+		contract C {
+			// these should take the same slot
+			function() returns (uint) a;
+			function() external returns (uint) b;
+			uint8 public x;
+
+			function set() {
+				x = 2;
+				a = g;
+				b = h;
+			}
+			function t1() returns (uint) {
+				return a();
+			}
+			function t2() returns (uint) {
+				return b();
+			}
+			function g() returns (uint) {
+				return 7;
+			}
+			function h() returns (uint) {
+				return 8;
+			}
+		}
+	)";
+
+	compileAndRun(sourceCode, 0, "C");
+	BOOST_CHECK(callContractFunction("set()") == encodeArgs());
+	BOOST_CHECK(callContractFunction("t1()") == encodeArgs(u256(7)));
+	BOOST_CHECK(callContractFunction("t2()") == encodeArgs(u256(8)));
+	BOOST_CHECK(callContractFunction("x()") == encodeArgs(u256(2)));
+}
+// TODO: check `new function(uint) internal returns (uint)[](20)`
 
 // TODO: arrays, libraries with external functions
 
