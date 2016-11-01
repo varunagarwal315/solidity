@@ -1278,7 +1278,7 @@ BOOST_AUTO_TEST_CASE(event_function_clash)
 			}
 		}
 	)";
-	BOOST_CHECK(expectError(text) == Error::Type::TypeError);
+	BOOST_CHECK(expectError(text) == Error::Type::DeclarationError);
 }
 
 BOOST_AUTO_TEST_CASE(access_to_default_function_visibility)
@@ -2603,7 +2603,7 @@ BOOST_AUTO_TEST_CASE(bare_call_with_base_name)
 		contract A { }
 		contract B is A { function f() { A.call(\"7885\"); } }
 	)";
-	BOOST_CHECK(expectError(text) == Error::Type::TypeError);
+	BOOST_CHECK(expectError(text) == Error::Type::SyntaxError);
 }
 
 BOOST_AUTO_TEST_CASE(send_with_base_name)
@@ -2612,7 +2612,7 @@ BOOST_AUTO_TEST_CASE(send_with_base_name)
 		contract A { }
 		contract B is A { function f() { A.send(10); } }
 	)";
-	BOOST_CHECK(expectError(text) == Error::Type::TypeError);
+	BOOST_CHECK(expectError(text) == Error::Type::SyntaxError);
 }
 
 BOOST_AUTO_TEST_CASE(delegatecall_with_base_name)
@@ -2621,7 +2621,7 @@ BOOST_AUTO_TEST_CASE(delegatecall_with_base_name)
 		contract A { }
 		contract B is A { function f() { A.delegatecall(\"abbc\"); } }
 	)";
-	BOOST_CHECK(expectError(text) == Error::Type::TypeError);
+	BOOST_CHECK(expectError(text) == Error::Type::SyntaxError);
 }
 
 BOOST_AUTO_TEST_CASE(callcode_with_base_name)
@@ -2630,7 +2630,7 @@ BOOST_AUTO_TEST_CASE(callcode_with_base_name)
 		contract A { }
 		contract B is A { function f() { A.callcode(\"abbc\"); } }
 	)";
-	BOOST_CHECK(expectError(text) == Error::Type::TypeError);
+	BOOST_CHECK(expectError(text) == Error::Type::SyntaxError);
 }
 
 BOOST_AUTO_TEST_CASE(multi_variable_declaration_wildcards_fine)
